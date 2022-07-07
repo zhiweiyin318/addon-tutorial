@@ -1,0 +1,29 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: busybox-addon-controller
+  labels:
+    app: busybox-addon-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: busybox-addon-controller
+  template:
+    metadata:
+      labels:
+        app: busybox-addon-controller
+    spec:
+      serviceAccountName: busybox-addon-sa
+      containers:
+      - name: busybox-addon-manager
+        image: example-addon-image
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: EXAMPLE_IMAGE_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: image-config
+              key: EXAMPLE_IMAGE_NAME
+        args:
+          - "/busyboxaddon"
