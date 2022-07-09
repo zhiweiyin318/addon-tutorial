@@ -30,7 +30,11 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 build: fmt vet ## Build manager binary.
-	go build -a -o $(OUTPUTDIR)/busyboxaddon examples/busyboxaddon/manager/main.go
+	go build -a -o $(OUTPUTDIR)/busybox-addon examples/busyboxaddon/manager/main.go
+	go build -a -o $(OUTPUTDIR)/leaseprober-addon examples/leaseproberaddon/manager/main.go
+	go build -a -o $(OUTPUTDIR)/leaseprober-agent examples/leaseproberaddon/agent/main.go
+	go build -a -o $(OUTPUTDIR)/workprober-addon examples/workproberaddon/manager/main.go
+
 
 images:
 	docker build -t $(EXAMPLE_IMAGE_NAME) -f Dockerfile .
@@ -40,13 +44,22 @@ deploy-ocm:
 	deploy/ocm/install.sh
 
 deploy-busybox-addon: ensure-kustomize
-	cp deploy/busyboxaddon/kustomization.yaml deploy/busyboxaddon/kustomization.yaml.tmp
-	cd deploy/busyboxaddon && $(KUSTOMIZE) edit set image example-addon-image=$(EXAMPLE_IMAGE_NAME) && $(KUSTOMIZE) edit add configmap image-config --from-literal=EXAMPLE_IMAGE_NAME=$(EXAMPLE_IMAGE_NAME)
-	$(KUSTOMIZE) build deploy/busyboxaddon | $(KUBECTL) apply -f -
-	mv deploy/busyboxaddon/kustomization.yaml.tmp deploy/busyboxaddon/kustomization.yaml
+	$(KUSTOMIZE) build deploy/addons/busybox-addon | $(KUBECTL) apply -f -
 
 undeploy-busybox-addon: ensure-kustomize
-	$(KUSTOMIZE) build deploy/busyboxaddon | $(KUBECTL) delete --ignore-not-found -f -
+	$(KUSTOMIZE) build deploy/addons/busybox-addon | $(KUBECTL) delete --ignore-not-found -f -
+
+deploy-leaseprober-addon: ensure-kustomize
+	$(KUSTOMIZE) build deploy/addons/leaseprober-addon | $(KUBECTL) apply -f -
+
+undeploy-leaseprober-addon: ensure-kustomize
+	$(KUSTOMIZE) build deploy/addons/leaseprober | $(KUBECTL) delete --ignore-not-found -f -
+
+deploy-workprober-addon: ensure-kustomize
+	$(KUSTOMIZE) build deploy/addons/workprober-addon | $(KUBECTL) apply -f -
+
+undeploy-workprober-addon: ensure-kustomize
+	$(KUSTOMIZE) build deploy/addons/workprober-addon | $(KUBECTL) delete --ignore-not-found -f -
 
 
 # Ensure kustomize

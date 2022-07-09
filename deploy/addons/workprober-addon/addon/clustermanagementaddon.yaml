@@ -1,0 +1,8 @@
+apiVersion: addon.open-cluster-management.io/v1alpha1
+kind: ClusterManagementAddOn
+metadata:
+  name: workprober-addon
+spec:
+  addOnMeta:
+    displayName: workprober Addon
+    description: "workprober-addon is an example addon to use the status of manifestWork as healthiness prober"

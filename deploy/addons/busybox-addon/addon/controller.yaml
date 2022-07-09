@@ -16,14 +16,8 @@ spec:
     spec:
       serviceAccountName: busybox-addon-sa
       containers:
-      - name: busybox-addon-manager
-        image: example-addon-image
+      - name: busybox-addon-controller
+        image: quay.io/open-cluster-management/addons:latest
         imagePullPolicy: IfNotPresent
-        env:
-        - name: EXAMPLE_IMAGE_NAME
-          valueFrom:
-            configMapKeyRef:
-              name: image-config
-              key: EXAMPLE_IMAGE_NAME
         args:
-          - "/busyboxaddon"
+          - "/busybox-addon"

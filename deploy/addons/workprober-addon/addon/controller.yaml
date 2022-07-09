@@ -1,0 +1,23 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: workprober-addon-controller
+  labels:
+    app: workprober-addon-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: workprober-addon-controller
+  template:
+    metadata:
+      labels:
+        app: workprober-addon-controller
+    spec:
+      serviceAccountName: workprober-addon-sa
+      containers:
+      - name: workprober-addon-controller
+        image: quay.io/open-cluster-management/addons:latest
+        imagePullPolicy: IfNotPresent
+        args:
+          - "/workprober-addon"

@@ -39,6 +39,7 @@ func (a *busyboxAddonAgent) Manifests(cluster *clusterv1.ManagedCluster, addon *
 							"sleep",
 							"3600",
 						},
+						ImagePullPolicy: v1.PullIfNotPresent,
 					},
 				},
 			},
@@ -51,6 +52,9 @@ func (a *busyboxAddonAgent) Manifests(cluster *clusterv1.ManagedCluster, addon *
 func (a *busyboxAddonAgent) GetAgentAddonOptions() agent.AgentAddonOptions {
 	return agent.AgentAddonOptions{
 		AddonName: "busybox-addon",
+		// can configure InstallStrategy to create managedClusterAddon automatically.
+		// currently we support InstallAllStrategy and InstallByLabelStrategy strategies.
+		// InstallStrategy: agent.InstallAllStrategy("open-cluster-management-agent-addon"),
 	}
 }
 

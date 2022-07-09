@@ -1,0 +1,8 @@
+apiVersion: addon.open-cluster-management.io/v1alpha1
+kind: ClusterManagementAddOn
+metadata:
+  name: leaseprober-addon
+spec:
+  addOnMeta:
+    displayName: leaseprober Addon
+    description: "leaseprober-addon is an example addon to use lease as healthiness prober"
