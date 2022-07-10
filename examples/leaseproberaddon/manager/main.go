@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"os"
-	"os/signal"
-	"syscall"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -62,7 +60,7 @@ func (a *leaseProberAddonAgent) Manifests(cluster *clusterv1.ManagedCluster, add
 								},
 							},
 						},
-						ServiceAccountName: "leaseprober-addon-sa",
+						ServiceAccountName: "leaseprober-addon-agent-sa",
 					},
 				},
 			},
@@ -73,7 +71,7 @@ func (a *leaseProberAddonAgent) Manifests(cluster *clusterv1.ManagedCluster, add
 				Kind:       "ClusterRole",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "leaseprober-addon",
+				Name: "leaseprober-addon-agent",
 			},
 			Rules: []rbacv1.PolicyRule{
 				{
@@ -94,16 +92,16 @@ func (a *leaseProberAddonAgent) Manifests(cluster *clusterv1.ManagedCluster, add
 				Kind:       "ClusterRoleBinding",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "leaseprober-addon",
+				Name: "leaseprober-addon-agent",
 			},
 			RoleRef: rbacv1.RoleRef{
 				Kind: "ClusterRole",
-				Name: "leaseprober-addon",
+				Name: "leaseprober-addon-agent",
 			},
 			Subjects: []rbacv1.Subject{
 				{
 					Kind:      rbacv1.ServiceAccountKind,
-					Name:      "leaseprober-addon-sa",
+					Name:      "leaseprober-addon-agent-sa",
 					Namespace: addon.Spec.InstallNamespace,
 				},
 			},
@@ -115,7 +113,7 @@ func (a *leaseProberAddonAgent) Manifests(cluster *clusterv1.ManagedCluster, add
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: addon.Spec.InstallNamespace,
-				Name:      "leaseprober-addon-sa",
+				Name:      "leaseprober-addon-agent-sa",
 			},
 		},
 	}
@@ -129,6 +127,7 @@ func (a *leaseProberAddonAgent) GetAgentAddonOptions() agent.AgentAddonOptions {
 		InstallStrategy: agent.InstallAllStrategy(addonInstallNamespace),
 	}
 }
+
 func main() {
 	kubeConfig, err := restclient.InClusterConfig()
 	if err != nil {
@@ -146,9 +145,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	go addonMgr.Start(context.Background())
+	ctx := context.Background()
+	go addonMgr.Start(ctx)
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	<-sigs
+	<-ctx.Done()
 }

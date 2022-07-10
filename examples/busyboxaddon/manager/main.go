@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"os"
-	"os/signal"
-	"syscall"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -75,9 +73,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	go addonMgr.Start(context.Background())
+	ctx := context.Background()
+	go addonMgr.Start(ctx)
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	<-sigs
+	<-ctx.Done()
 }

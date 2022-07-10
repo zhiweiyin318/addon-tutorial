@@ -34,7 +34,7 @@ build: fmt vet ## Build manager binary.
 	go build -a -o $(OUTPUTDIR)/leaseprober-addon examples/leaseproberaddon/manager/main.go
 	go build -a -o $(OUTPUTDIR)/leaseprober-agent examples/leaseproberaddon/agent/main.go
 	go build -a -o $(OUTPUTDIR)/workprober-addon examples/workproberaddon/manager/main.go
-
+	go build -a -o $(OUTPUTDIR)/helm-addon examples/helmaddon/manager/main.go
 
 images:
 	docker build -t $(EXAMPLE_IMAGE_NAME) -f Dockerfile .
@@ -60,6 +60,12 @@ deploy-workprober-addon: ensure-kustomize
 
 undeploy-workprober-addon: ensure-kustomize
 	$(KUSTOMIZE) build deploy/addons/workprober-addon | $(KUBECTL) delete --ignore-not-found -f -
+
+deploy-helm-addon: ensure-kustomize
+	$(KUSTOMIZE) build deploy/addons/helm-addon | $(KUBECTL) apply -f -
+
+undeploy-helm-addon: ensure-kustomize
+	$(KUSTOMIZE) build deploy/addons/helm-addon | $(KUBECTL) delete --ignore-not-found -f -
 
 
 # Ensure kustomize

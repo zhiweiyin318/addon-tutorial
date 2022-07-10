@@ -1,4 +1,0 @@
-
-name: leaseprober-addon-agent
-addonInstallNamespace: open-cluster-management-agent-addon
-imageName: quay.io/open-cluster-management/addons:latest

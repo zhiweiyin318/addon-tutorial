@@ -1,0 +1,22 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Values.addonInstallNamespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ .Values.name }}-sa
+      containers:
+      - name: {{ .Values.name }}
+        image: {{ .Values.imageName }}
+        imagePullPolicy: IfNotPresent
+        args:
+          - "/helm-agent"

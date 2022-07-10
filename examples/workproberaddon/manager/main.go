@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,13 +32,13 @@ func (a *leaseProberAddonAgent) Manifests(cluster *clusterv1.ManagedCluster, add
 				Kind:       "Pod",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "busybox",
+				Name:      "workprober-addon-agent",
 				Namespace: addon.Spec.InstallNamespace,
 			},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					{
-						Name:  "busybox",
+						Name:  "workprober-addon-agent",
 						Image: "busybox",
 						Command: []string{
 							"sleep",
@@ -111,9 +109,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	go addonMgr.Start(context.Background())
+	ctx := context.Background()
+	go addonMgr.Start(ctx)
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	<-sigs
+	<-ctx.Done()
 }

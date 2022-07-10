@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
@@ -33,9 +31,8 @@ func main() {
 		addonInstallNamespace,
 	)
 
+	ctx := context.Background()
 	go leaseUpdater.Start(context.Background())
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	<-sigs
+	<-ctx.Done()
 }

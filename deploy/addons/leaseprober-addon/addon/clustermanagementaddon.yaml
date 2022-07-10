@@ -4,5 +4,5 @@ metadata:
   name: leaseprober-addon
 spec:
   addOnMeta:
-    displayName: leaseprober Addon
+    displayName: Lease prober Addon
     description: "leaseprober-addon is an example addon to use lease as healthiness prober"
