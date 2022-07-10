@@ -1,8 +1,0 @@
-apiVersion: addon.open-cluster-management.io/v1alpha1
-kind: ClusterManagementAddOn
-metadata:
-  name: helm-addon
-spec:
-  addOnMeta:
-    displayName: Helm Addon
-    description: "helm-addon is an example addon to use Helm chart"

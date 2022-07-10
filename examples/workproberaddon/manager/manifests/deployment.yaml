@@ -1,23 +1,22 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: helm-addon-controller
-  labels:
-    app: helm-addon-controller
+  name: leaseprober-addon-agent
+  namespace: open-cluster-management-agent-addon
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: helm-addon-controller
+      addon: busybox
   template:
     metadata:
       labels:
-        app: helm-addon-controller
+        addon: busybox
     spec:
-      serviceAccountName: helm-addon-sa
+      serviceAccountName: leaseprober-addon-agent-sa
       containers:
-      - name: helm-addon-controller
+      - name: leaseprober-addon-agent
         image: quay.io/open-cluster-management/addons:latest
         imagePullPolicy: IfNotPresent
         args:
-          - "/helm-addon"
+          - "/leaseprober-agent"

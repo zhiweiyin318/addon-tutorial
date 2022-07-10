@@ -1,0 +1,22 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: workprober-addon-agent
+  namespace: open-cluster-management-agent-addon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      addon: workprober-addon
+  template:
+    metadata:
+      labels:
+        addon: workprober-addon
+    spec:
+      containers:
+        - name: busybox
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          args:
+            - "sleep"
+            - "3600"

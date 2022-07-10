@@ -630,7 +630,7 @@ k8s.io/utils/net
 k8s.io/utils/pointer
 k8s.io/utils/strings/slices
 k8s.io/utils/trace
-# open-cluster-management.io/addon-framework v0.3.1-0.20220707024053-f21167bdfb31
+# open-cluster-management.io/addon-framework v0.3.1-0.20220711083837-a8ef3150ce8a
 ## explicit; go 1.17
 open-cluster-management.io/addon-framework/pkg/addonfactory
 open-cluster-management.io/addon-framework/pkg/addonmanager
