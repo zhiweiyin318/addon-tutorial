@@ -5,7 +5,7 @@ import (
 	"embed"
 
 	"os"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	"open-cluster-management.io/addon-framework/pkg/agent"
@@ -33,11 +33,7 @@ func main() {
 	}
 
 	// installStrategy := agent.InstallAllStrategy("open-cluster-management-agent-addon")
-	installStrategy := &agent.InstallStrategy{
-		Type:             agent.InstallByLabel,
-		InstallNamespace: "open-cluster-management-agent-addon",
-		LabelSelector:    &metav1.LabelSelector{...},
-	}
+	installStrategy := agent.InstallAllStrategy("open-cluster-management-agent-addon")
 	agentAddon, err := addonfactory.NewAgentAddonFactory(addonName, FS, "manifests").
 		WithInstallStrategy(installStrategy).BuildTemplateAgentAddon()
 	if err != nil {

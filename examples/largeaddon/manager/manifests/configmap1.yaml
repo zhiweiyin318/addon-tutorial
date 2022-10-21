@@ -1,0 +1,11 @@
+{{- if eq .AddonVersion "1.0" }}
+apiVersion: v1
+data:
+  data: "123"
+kind: ConfigMap
+metadata:
+  name: large-addon-data-1
+  namespace: open-cluster-management-agent-addon
+  labels:
+    "app": "large-addon"
+{{- end }}

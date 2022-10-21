@@ -1,0 +1,22 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: large-addon-agent
+  namespace: open-cluster-management-agent-addon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      addon: large-addon-agent
+  template:
+    metadata:
+      labels:
+        addon: large-addon-agent
+    spec:
+      containers:
+        - name: large-addon-agent
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          args:
+            - "sleep"
+            - "3600"

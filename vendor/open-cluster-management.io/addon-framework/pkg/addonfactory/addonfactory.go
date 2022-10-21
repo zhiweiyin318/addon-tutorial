@@ -7,6 +7,7 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2"
 	"open-cluster-management.io/addon-framework/pkg/agent"
@@ -38,22 +39,32 @@ type AgentAddonFactory struct {
 // NewAgentAddonFactory builds an addonAgentFactory instance with addon name and fs.
 // dir is the path prefix based on the fs path.
 func NewAgentAddonFactory(addonName string, fs embed.FS, dir string) *AgentAddonFactory {
+	s := runtime.NewScheme()
+	_ = scheme.AddToScheme(s)
+	_ = apiextensionsv1.AddToScheme(s)
+	_ = apiextensionsv1beta1.AddToScheme(s)
+
 	return &AgentAddonFactory{
 		fs:  fs,
 		dir: dir,
 		agentAddonOptions: agent.AgentAddonOptions{
-			AddonName:       addonName,
-			Registration:    nil,
-			InstallStrategy: nil,
-			HealthProber:    nil,
+			AddonName:           addonName,
+			Registration:        nil,
+			InstallStrategy:     nil,
+			HealthProber:        nil,
+			SupportedConfigGVRs: []schema.GroupVersionResource{},
 		},
 		trimCRDDescription: false,
+		scheme:             s,
 	}
 }
 
 // WithScheme is an optional configuration, only used when the agentAddon has customized resource types.
-func (f *AgentAddonFactory) WithScheme(scheme *runtime.Scheme) *AgentAddonFactory {
-	f.scheme = scheme
+func (f *AgentAddonFactory) WithScheme(s *runtime.Scheme) *AgentAddonFactory {
+	f.scheme = s
+	_ = scheme.AddToScheme(f.scheme)
+	_ = apiextensionsv1.AddToScheme(f.scheme)
+	_ = apiextensionsv1beta1.AddToScheme(f.scheme)
 	return f
 }
 
@@ -86,26 +97,34 @@ func (f *AgentAddonFactory) WithAgentHealthProber(prober *agent.HealthProber) *A
 	return f
 }
 
+// WithAgentHostedModeEnabledOption will enable the agent hosted deploying mode.
+func (f *AgentAddonFactory) WithAgentHostedModeEnabledOption() *AgentAddonFactory {
+	f.agentAddonOptions.HostedModeEnabled = true
+	return f
+}
+
 // WithTrimCRDDescription is to enable trim the description of CRDs in manifestWork.
 func (f *AgentAddonFactory) WithTrimCRDDescription() *AgentAddonFactory {
 	f.trimCRDDescription = true
 	return f
 }
 
+// WithConfigGVRs defines the addon supported configuration GroupVersionResource
+func (f *AgentAddonFactory) WithConfigGVRs(gvrs ...schema.GroupVersionResource) *AgentAddonFactory {
+	f.agentAddonOptions.SupportedConfigGVRs = append(f.agentAddonOptions.SupportedConfigGVRs, gvrs...)
+	return f
+}
+
 // BuildHelmAgentAddon builds a helm agentAddon instance.
 func (f *AgentAddonFactory) BuildHelmAgentAddon() (agent.AgentAddon, error) {
-	if f.scheme == nil {
-		f.scheme = runtime.NewScheme()
+	if err := validateSupportedConfigGVRs(f.agentAddonOptions.SupportedConfigGVRs); err != nil {
+		return nil, err
 	}
-	_ = scheme.AddToScheme(f.scheme)
-	_ = apiextensionsv1.AddToScheme(f.scheme)
-	_ = apiextensionsv1beta1.AddToScheme(f.scheme)
 
 	userChart, err := loadChart(f.fs, f.dir)
 	if err != nil {
 		return nil, err
 	}
-	// TODO: validate chart
 
 	agentAddon := newHelmAgentAddon(f, userChart)
 
@@ -114,6 +133,10 @@ func (f *AgentAddonFactory) BuildHelmAgentAddon() (agent.AgentAddon, error) {
 
 // BuildTemplateAgentAddon builds a template agentAddon instance.
 func (f *AgentAddonFactory) BuildTemplateAgentAddon() (agent.AgentAddon, error) {
+	if err := validateSupportedConfigGVRs(f.agentAddonOptions.SupportedConfigGVRs); err != nil {
+		return nil, err
+	}
+
 	templateFiles, err := getTemplateFiles(f.fs, f.dir)
 	if err != nil {
 		klog.Errorf("failed to get template files. %v", err)
@@ -123,13 +146,6 @@ func (f *AgentAddonFactory) BuildTemplateAgentAddon() (agent.AgentAddon, error) 
 		return nil, fmt.Errorf("there is no template files")
 	}
 
-	if f.scheme == nil {
-		f.scheme = runtime.NewScheme()
-	}
-	_ = scheme.AddToScheme(f.scheme)
-	_ = apiextensionsv1.AddToScheme(f.scheme)
-	_ = apiextensionsv1beta1.AddToScheme(f.scheme)
-
 	agentAddon := newTemplateAgentAddon(f)
 
 	for _, file := range templateFiles {
@@ -137,10 +153,36 @@ func (f *AgentAddonFactory) BuildTemplateAgentAddon() (agent.AgentAddon, error) 
 		if err != nil {
 			return nil, err
 		}
-		if err := agentAddon.validateTemplateData(file, template); err != nil {
-			return nil, err
-		}
 		agentAddon.addTemplateData(file, template)
 	}
 	return agentAddon, nil
+}
+
+func validateSupportedConfigGVRs(configGVRs []schema.GroupVersionResource) error {
+	if len(configGVRs) == 0 {
+		// no configs required, ignore
+		return nil
+	}
+
+	configGVRMap := map[schema.GroupVersionResource]bool{}
+	for index, gvr := range configGVRs {
+		if gvr.Empty() {
+			return fmt.Errorf("config type is empty, index=%d", index)
+		}
+
+		if gvr.Version == "" {
+			return fmt.Errorf("config version is required, index=%d", index)
+		}
+
+		if gvr.Resource == "" {
+			return fmt.Errorf("config resource is required, index=%d", index)
+		}
+
+		if _, existed := configGVRMap[gvr]; existed {
+			return fmt.Errorf("config type %q is duplicated", gvr.String())
+		}
+		configGVRMap[gvr] = true
+	}
+
+	return nil
 }

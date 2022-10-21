@@ -1,15 +1,20 @@
 package addonfactory
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"sort"
+	"strings"
 
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/engine"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/klog/v2"
+	"open-cluster-management.io/addon-framework/pkg/addonmanager/constants"
 	"open-cluster-management.io/addon-framework/pkg/agent"
 	addonapiv1alpha1 "open-cluster-management.io/api/addon/v1alpha1"
 	clusterv1 "open-cluster-management.io/api/cluster/v1"
@@ -18,9 +23,11 @@ import (
 // helmBuiltinValues includes the built-in values for helm agentAddon.
 // the values in helm chart should begin with a lowercase letter, so we need convert it to Values by JsonStructToValues.
 type helmBuiltinValues struct {
-	ClusterName           string `json:"clusterName"`
-	AddonInstallNamespace string `json:"addonInstallNamespace"`
-	HubKubeConfigSecret   string `json:"hubKubeConfigSecret,omitempty"`
+	ClusterName             string `json:"clusterName"`
+	AddonInstallNamespace   string `json:"addonInstallNamespace"`
+	HubKubeConfigSecret     string `json:"hubKubeConfigSecret,omitempty"`
+	ManagedKubeConfigSecret string `json:"managedKubeConfigSecret,omitempty"`
+	InstallMode             string `json:"installMode"`
 }
 
 type HelmAgentAddon struct {
@@ -85,15 +92,31 @@ func (a *HelmAgentAddon) Manifests(
 			continue
 		}
 		klog.V(4).Infof("rendered template: %v", data)
-		object, _, err := a.decoder.Decode([]byte(data), nil, nil)
-		if err != nil {
-			if runtime.IsMissingKind(err) {
-				klog.V(4).Infof("Skipping template %v, reason: %v", k, err)
-				continue
+
+		yamlReader := yaml.NewYAMLReader(bufio.NewReader(strings.NewReader(data)))
+		for {
+			b, err := yamlReader.Read()
+			if err == io.EOF {
+				break
 			}
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
+			if len(b) != 0 {
+				object, _, err := a.decoder.Decode(b, nil, nil)
+				if err != nil {
+					// In some conditions, resources will be provide by other hub-side components.
+					// Example case: https://github.com/open-cluster-management-io/addon-framework/pull/72
+					if runtime.IsMissingKind(err) {
+						klog.V(4).Infof("Skipping template %v, reason: %v", k, err)
+						continue
+					}
+					return nil, err
+				}
+				objects = append(objects, object)
+			}
 		}
-		objects = append(objects, object)
+
 	}
 
 	if a.trimCRDDescription {
@@ -117,7 +140,10 @@ func (a *HelmAgentAddon) getValues(
 			if err != nil {
 				return overrideValues, err
 			}
+
+			klog.V(4).Infof("index=%d, user values: %v", i, userValues)
 			overrideValues = MergeValues(overrideValues, userValues)
+			klog.V(4).Infof("index=%d, override values: %v", i, overrideValues)
 		}
 	}
 
@@ -155,6 +181,9 @@ func (a *HelmAgentAddon) getBuiltinValues(
 	if a.agentAddonOptions.Registration != nil {
 		builtinValues.HubKubeConfigSecret = fmt.Sprintf("%s-hub-kubeconfig", a.agentAddonOptions.AddonName)
 	}
+
+	builtinValues.ManagedKubeConfigSecret = fmt.Sprintf("%s-managed-kubeconfig", addon.Name)
+	builtinValues.InstallMode, _ = constants.GetHostedModeInfo(addon.GetAnnotations())
 
 	helmBuiltinValues, err := JsonStructToValues(builtinValues)
 	if err != nil {

@@ -2,13 +2,13 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: busybox-addon-sa
+  name: large-addon-sa
 
 ---
   kind: ClusterRole
   apiVersion: rbac.authorization.k8s.io/v1
   metadata:
-    name: busybox-addon
+    name: large-addon
   rules:
     - apiGroups: [ "certificates.k8s.io" ]
       resources: [ "certificatesigningrequests", "certificatesigningrequests/approval" ]
@@ -39,12 +39,12 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: busybox-addon
+  name: large-addon
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: busybox-addon
+  name: large-addon
 subjects:
   - kind: ServiceAccount
-    name: busybox-addon-sa
+    name: large-addon-sa
     namespace: open-cluster-management

@@ -1,0 +1,50 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: busybox-addon-sa
+
+---
+  kind: ClusterRole
+  apiVersion: rbac.authorization.k8s.io/v1
+  metadata:
+    name: busybox-addon
+  rules:
+    - apiGroups: [ "certificates.k8s.io" ]
+      resources: [ "certificatesigningrequests", "certificatesigningrequests/approval" ]
+      verbs: [ "get", "list", "watch", "create", "update" ]
+    - apiGroups: ["cluster.open-cluster-management.io"]
+      resources: ["managedclusters"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["work.open-cluster-management.io"]
+      resources: ["manifestworks"]
+      verbs: ["create", "update", "get", "list", "watch", "delete", "deletecollection", "patch"]
+    - apiGroups: ["addon.open-cluster-management.io"]
+      resources: ["managedclusteraddons/finalizers"]
+      verbs: ["update"]
+    - apiGroups: [ "addon.open-cluster-management.io" ]
+      resources: [ "clustermanagementaddons/finalizers" ]
+      verbs: [ "update" ]
+    - apiGroups: ["addon.open-cluster-management.io"]
+      resources: ["clustermanagementaddons"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["addon.open-cluster-management.io"]
+      resources: ["managedclusteraddons"]
+      verbs: ["get", "list", "watch", "create", "update", "delete"]
+    - apiGroups: ["addon.open-cluster-management.io"]
+      resources: ["managedclusteraddons/status"]
+      verbs: ["update", "patch"]
+      
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: busybox-addon
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: busybox-addon
+subjects:
+  - kind: ServiceAccount
+    name: busybox-addon-sa
+    namespace: open-cluster-management
