@@ -59,9 +59,9 @@ func getDefaultValues(cluster *clusterv1.ManagedCluster,
 	version := os.Getenv("ADDON_VERSION")
 
 	manifestConfig := struct {
-		Version string
+		AddonVersion string
 	}{
-		Version: version,
+		AddonVersion: version,
 	}
 
 	return addonfactory.StructToValues(manifestConfig), nil
