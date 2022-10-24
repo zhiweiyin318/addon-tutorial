@@ -1,4 +1,4 @@
-FROM golang:1.17 AS builder
+FROM golang:1.18 AS builder
 WORKDIR /go/src/open-cluster-management.io/addon-tutorial
 COPY . .
 ENV GO_PACKAGE open-cluster-management.io/addon-tutorial
@@ -9,7 +9,7 @@ RUN go build -a -o busybox-addon examples/busyboxaddon/manager/main.go
 RUN	go build -a -o leaseprober-addon examples/leaseproberaddon/manager/main.go
 RUN	go build -a -o leaseprober-agent examples/leaseproberaddon/agent/main.go
 RUN	go build -a -o workprober-addon examples/workproberaddon/manager/main.go
-RUN go build -a -o large-addon examples/large-addon/agent/main.go
+RUN go build -a -o large-addon examples/largeaddon/manager/main.go
 
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
