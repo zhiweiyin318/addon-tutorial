@@ -1,6 +1,6 @@
 apiVersion: addon.open-cluster-management.io/v1alpha1
 kind: ManagedClusterAddOn
 metadata:
-  name: large-addon
+  name: busybox-addon
 spec:
   installNamespace: open-cluster-management-agent-addon

@@ -1,26 +1,23 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: large-addon-controller
+  name: busybox-addon-controller
   labels:
-    app: large-addon-controller
+    app: busybox-addon-controller
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: large-addon-controller
+      app: busybox-addon-controller
   template:
     metadata:
       labels:
-        app: large-addon-controller
+        app: busybox-addon-controller
     spec:
-      serviceAccountName: large-addon-sa
+      serviceAccountName: busybox-addon-sa
       containers:
-      - name: large-addon-controller
+      - name: busybox-addon-controller
         image: quay.io/open-cluster-management/addons:latest
         imagePullPolicy: IfNotPresent
         args:
-          - "/large-addon"
-        env:
-          - name: "ADDON_VERSION"
-            value: "1.0"
+          - "/busybox-addon"
