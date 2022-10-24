@@ -91,7 +91,7 @@ data:
   aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 kind: ConfigMap
 metadata:
-  name: large-addon-data-3
+  name: large-addon-data-4
   namespace: open-cluster-management-agent-addon
   labels:
     "app": "large-addon"
